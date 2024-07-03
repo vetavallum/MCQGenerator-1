@@ -6,7 +6,7 @@ import traceback
 def read_file(file):
     if file.name.endswith(".pdf"):
         try:
-            pdf_reader=PyPDF2.PdfFileReader(file)
+            pdf_reader=PyPDF2.PdfReader(file)
             text=""
             for page in pdf_reader.pages:
                 text+=page.extract_text()
@@ -26,6 +26,9 @@ def read_file(file):
 def get_table_data(quiz_str):
     try:
         # convert the quiz from a str to dict
+        print("quiz_str = ", quiz_str)
+        # print("json.dumps(quiz_str) = ", json.dumps(quiz_str,indent=2))
+        # quiz_str = json.dumps(quiz_str)
         quiz_dict=json.loads(quiz_str)
         quiz_table_data=[]
         

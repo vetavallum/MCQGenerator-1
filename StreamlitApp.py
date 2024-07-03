@@ -21,7 +21,11 @@ st.title("MCQs Creator Application with LangChain 🦜⛓️")
 with st.form("user_inputs"):
     #File Upload
     uploaded_file=st.file_uploader("Uplaod a PDF or txt file")
-
+    
+    #Text Content Upload
+    # uploaded_text=st.text_input("Insert Text")
+    uploaded_text=st.text_area("Insert Text")
+    # st.write(uploaded_text)
     #Input Fields
     mcq_count=st.number_input("No. of MCQs", min_value=3, max_value=50)
 
@@ -65,9 +69,65 @@ with st.form("user_inputs"):
                 if isinstance(response, dict):
                     #Extract the quiz data from the response
                     quiz=response.get("quiz", None)
+                    print("*******************")
+                    print("quiz = ", quiz)
+                    print("*******************")
+                    quiz=quiz.replace("### RESPONSE_JSON","")
+                    print("*******************")
+                    print("Srinivasan's quiz = ", quiz)
+                    print("*******************")
                     if quiz is not None:
                         table_data=get_table_data(quiz)
-                        if table_data is not None:
+                        if table_data is not None and table_data!=False:
+                            df=pd.DataFrame(table_data)
+                            df.index=df.index+1
+                            st.table(df)
+                            #Display the review in atext box as well
+                            st.text_area(label="Review", value=response["review"])
+                        else:
+                            st.error("Error in the table data")
+
+                else:
+                    print('Srinivasan - isinstance returns False')
+                    st.write(response)
+
+
+    if button and uploaded_text and mcq_count and subject and tone:
+        with st.spinner("loading..."):
+            try:
+                text=uploaded_text
+                #Count tokens and the cost of API call
+                with get_openai_callback() as cb:
+                    response=generate_evaluate_chain(
+                        {
+                        "text": text,
+                        "number": mcq_count,
+                        "subject":subject,
+                        "tone": tone,
+                        "response_json": json.dumps(RESPONSE_JSON)
+                            }
+                    )
+                #st.write(response)
+
+            except Exception as e:
+                traceback.print_exception(type(e), e, e.__traceback__)
+                st.error("Error")
+
+            else:
+                print(f"Total Tokens:{cb.total_tokens}")
+                print(f"Prompt Tokens:{cb.prompt_tokens}")
+                print(f"Completion Tokens:{cb.completion_tokens}")
+                print(f"Total Cost:{cb.total_cost}")
+                if isinstance(response, dict):
+                    #Extract the quiz data from the response
+                    quiz=response.get("quiz", None)
+                    quiz.replace("### RESPONSE_JSON","")
+                    print("*******************")
+                    print("Srinivasan's quiz = ", quiz)
+                    print("*******************")
+                    if quiz is not None:
+                        table_data=get_table_data(quiz)
+                        if table_data is not None and table_data!=False:
                             df=pd.DataFrame(table_data)
                             df.index=df.index+1
                             st.table(df)
@@ -78,6 +138,3 @@ with st.form("user_inputs"):
 
                 else:
                     st.write(response)
-
-
-
